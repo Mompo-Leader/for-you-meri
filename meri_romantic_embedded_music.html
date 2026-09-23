@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Մի փոքրիկ բան քեզ համար ❤️</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,"Noto Sans Armenian",sans-serif}
+body{overflow:hidden;background:radial-gradient(circle at 50% 25%,#ffe5f0,#e995ba 30%,#8b315a 67%,#220e1b);color:white}
+.scene{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
+.glow{position:absolute;width:65vw;height:65vw;max-width:650px;max-height:650px;border-radius:50%;background:#fff2;filter:blur(55px);animation:pulse 4s infinite}
+.content{position:relative;z-index:5;text-align:center;max-width:760px}
+.intro{font-size:clamp(21px,5vw,33px);font-weight:600;margin-bottom:28px;text-shadow:0 3px 18px #0005}
+button.open{border:0;border-radius:999px;padding:16px 35px;font-size:19px;font-weight:700;color:#7d214b;background:white;cursor:pointer;box-shadow:0 10px 35px #0004}
+.message{display:none;animation:show 1.5s ease both}.message h1{font-size:clamp(34px,8vw,64px);line-height:1.2;margin:0;text-shadow:0 5px 24px #0005}.message p{font-size:clamp(16px,4vw,21px);opacity:.9;margin-top:22px;letter-spacing:1px}
+.music{position:fixed;right:16px;top:16px;z-index:10;width:45px;height:45px;border-radius:50%;border:1px solid #fff7;background:#ffffff2b;color:#fff;backdrop-filter:blur(8px);cursor:pointer;font-size:18px;display:none}
+.heart{position:absolute;bottom:-60px;opacity:0;animation:rise linear forwards;z-index:2}
+.spark{position:absolute;width:5px;height:5px;border-radius:50%;background:white;opacity:0;animation:spark 2.5s infinite}
+@keyframes show{from{opacity:0;transform:translateY(35px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes rise{0%{opacity:0;transform:translateY(0) scale(.5)}12%{opacity:.9}100%{opacity:0;transform:translateY(-115vh) scale(1.2) rotate(35deg)}}
+@keyframes pulse{0%,100%{transform:scale(.9);opacity:.55}50%{transform:scale(1.08);opacity:.8}}
+@keyframes spark{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:.8;transform:scale(1.4)}}
+</style>
+</head>
+<body>
+<div class="scene" id="scene">
+<div class="glow"></div>
+<div class="content">
+<div class="intro" id="intro">Մերի, քեզ համար մի փոքրիկ բան կա ❤️</div>
+<button class="open" id="open">Բացել ❤️</button>
+<div class="message" id="message">
+<h1>Մերի,<br>դու իմ մոտիվացիայի գլխավոր հովանավորն ես ❤️</h1>
+<p>Սա հենց քեզ համար է ✨</p>
+</div>
+</div>
+<button class="music" id="music">♫</button>
+</div>
+
+<script>
+/* Երաժշտությունը ստեղծվում է հենց HTML-ի մեջ՝ Web Audio API-ով։
+   Առանձին MP3 կամ ինտերնետային հղում պետք չէ։ */
+let ctx,master,playing=false,timers=[];
+const scene=document.getElementById("scene"),open=document.getElementById("open"),
+intro=document.getElementById("intro"),message=document.getElementById("message"),music=document.getElementById("music");
+
+function note(freq,start,duration,vol=.045){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type="sine";o.frequency.value=freq;
+  g.gain.setValueAtTime(0,start);g.gain.linearRampToValueAtTime(vol,start+.08);
+  g.gain.exponentialRampToValueAtTime(.001,start+duration);
+  o.connect(g);g.connect(master);o.start(start);o.stop(start+duration+.05);
+}
+function chord(freqs,start,duration){
+  freqs.forEach((f,i)=>note(f,start+i*.015,duration,.035));
+}
+function playMusic(){
+  if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();
+  if(ctx.state==="suspended")ctx.resume();
+  master=master||ctx.createGain();master.gain.value=.42;
+  master.connect(ctx.destination);
+  const t=ctx.currentTime+.05, beat=.72;
+  const C=[261.63,329.63,392.00],Am=[220,261.63,329.63],F=[174.61,220,261.63],G=[196,246.94,293.66];
+  const chords=[C,Am,F,G,C,Am,F,G];
+  chords.forEach((c,i)=>{
+    const s=t+i*beat*2; chord(c,s,beat*2-.08);
+    const melody=[c[0]*2,c[1]*2,c[2]*2,c[1]*2];
+    melody.forEach((n,j)=>note(n,s+j*beat/2,beat/2-.04,.025));
+  });
+  timers.push(setTimeout(()=>{if(playing)playMusic()},chords.length*beat*2*1000-100));
+}
+function heart(){
+  const h=document.createElement("div");h.className="heart";h.textContent=Math.random()>.35?"♥":"♡";
+  h.style.left=Math.random()*100+"%";h.style.fontSize=18+Math.random()*28+"px";
+  h.style.animationDuration=4+Math.random()*4+"s";scene.appendChild(h);setTimeout(()=>h.remove(),9000);
+}
+function spark(){
+  const s=document.createElement("div");s.className="spark";s.style.left=10+Math.random()*80+"%";s.style.top=10+Math.random()*80+"%";
+  scene.appendChild(s);setTimeout(()=>s.remove(),3000);
+}
+open.addEventListener("click",()=>{
+  intro.style.display="none";open.style.display="none";message.style.display="block";music.style.display="block";
+  playing=true;playMusic();
+  for(let i=0;i<35;i++)setTimeout(heart,i*120);
+  for(let i=0;i<20;i++)setTimeout(spark,i*150);
+});
+music.addEventListener("click",()=>{
+  if(!ctx)return;
+  if(playing){playing=false;ctx.suspend();music.textContent="🔇"}
+  else{playing=true;ctx.resume();playMusic();music.textContent="♫"}
+});
+</script>
+</body>
+</html>
